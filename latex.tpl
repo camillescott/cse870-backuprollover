@@ -44,7 +44,7 @@ $endif$
 
 %\author{$for(author)$$author.name$ ($author.affiliation$)$sep$ \and $endfor$}
 
-\date{}
+%\date{}
 
 \begin{document}  
 \setkeys{Gin}{width=1\textwidth}    
