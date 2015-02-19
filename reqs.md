@@ -9,40 +9,77 @@ abstract: |
 
 ...
 
-## Hardware
-Operating requirements and performance requirements dictate that components be consistent with existing automotive architecture, so the various controllers are therefore required to be ECUs connected over a CAN bus.  ECUs, or electronic control units, are embedded computers within modern automotives [b].  They are essentially microcontrollers connected with inputs and outputs.  ECUs broadcast messages over the controller area network, or CAN, bus, which will serve as the network in our system.  For the sake of simplicity, the controller associated with each sensor or output will be referred to as an individual ECU.
 
-Our hardware requirements are a gear shift mechanism, a gear shift ECU, a backup proximity sensor, a backup proximity sensor ECU, an audio alert system, an audio alert system ECU, a stereo system, a stereo system ECU, a camera sensor, a camera sensor ECU, a video display, a video display ECU, and a CAN bus.  Despite this notation, some or all of the specified controller behaviors may be combined into a single added ECU, or integrated into an existing ECU.
+## Functional Requirements
 
-The backup proximity sensor must use sonar or a similar technology to detect objects within a field, and provide information about distance from the sensor.  If one sensor is not able to detect distance on its own, then multiple sensors will be used to triangulate.  The audio alert system must be able to make a loud alert sound, and must be separate from any stereo system.  The stereo system must be mutable according to commands issued along the network.  The camera sensor must use a digital camera technology which captures images within range 1-4 (see Quality and Performance: Definitions section for range definitions), which can be transmitted over the network with less than .1 seconds of delay.
+Operating requirements and performance requirements dictate that components be consistent with existing automotive architecture, so the various controllers are therefore required to be Electronic Control Units (ECUs) connected over a Controller Area Network (CAN) bus.  ECUs are embedded computers within modern automobiles [@her_component-based_2007].  They are essentially microcontrollers connected with inputs and outputs.  ECUs broadcast messages over the CAN, bus, which will serve as the network in our system.  For the sake of simplicity, the controller associated with each sensor or output will be referred to as an individual ECU.
 
-## Software
+1. Proximity Alert System
+    a. A gear shift ECU to sense when the vehicle is in reverse and broadcast a message
+    b. A rear-facing sensor using sonar or similar technology to detect objects in a known field of view
+        i. If one sensor is insufficient, multiple sensors are used
+        ii. The field of view is bounded by the defined ranges
+    c. An ECU to control the sensor (1.b) and process inputs
+        i. Listens for a message from the gear shift ECU (1.a) that the vehicle is in reverse
+        ii. If the vehicle is detected to be in reverse, the sensor (1.b) should be turned on; else, it should be turned off
+        iii. When the sensor (1.b) is on, compute the distance to the nearest object and place it into one of ranges 1, 2, 3, 4, or 5
+        iv. If the sensor indicates range 1,2,3, or 4, broadcast a message indicating the stereo system to mute and a message for the audio alert system ECU (1d.) telling what range level was detected
+        v. If the sensor indicates range level 5, broadcast a message for the stereo system to resume previous volume and for the alert system to cease sounding
+        vi. If the gear shift ECU (1.a) indicates the vehicle is no longer in reverse, repeat the behavior of 1.a.v
+    d. An audio alert system to produce sounds (using existing alert system)
+    e. Audio alert system ECU
+	    i. Should listen for updates from the backup proximity sensor ECU (1.c)
+	    ii. If 1.c sends a range 1 message, sound the alert continuously
+	    iii. If 1.c sends a range 2 message, sound an alert for 0.2 seconds every 0.4 seconds
+	    iv. If 1.c sends a range 3 message, sound an alert for 0.2 seconds every 0.8 seconds
+	    v. If 1.c sends a range 4 message, sound an alert for 0.2 seconds every 1.0 seconds
+	    vi. The ECU shall contain an interval timer so that the sound pattern will not restart when a duplicate range message is received
+    f. A stereo system (if available)
+    g. A stereo system ECU
+        i. Should listen for updates from the backup proximity sensor ECU (1.c)
+        ii. If this ECU receives a mute message, it should store the current volume and reduce the volume to 0
+        iii. If this ECU receives a resume message, it should restore the volume to its previously stored level
+        iv. This this ECU receives a resume message and is not currently muted, it should ignore it
 
-The software requirements for this system also include both functional and non-functional requirements.  The functional requirements include initiating audio alerts and turning off stereo volume based on backup proximity sensor data, displaying a video feed based on camera sensor data, and turning these systems on and off  based on gear shift information.  These requirements fit broadly into two categories, the proximity sensor alert system and the reverse camera system.
+2. Camera System
+    a. A camera sensor, consisting of a digital video camera, facing the rear, viewing ranges 1 to 4
+    b. A camera sensor ECU
+        i. The camera sensor ECU should listen for a message from the gear shift ECU (1.a) indicating the vehicle is in reverse
+        ii. If the vehicle is in reverse, the camera should be initiated
+        iii. The video information should be converted to the appropriate packet format and streamed across the CAN bus
+        iv. When the vehicle is not in reverse (1.a), the camera should be turned off
+    c. A video display, integrated into the rear-view mirror
+    d. A video display ECU
+        i. The ECU should listen for a message from the gear shift ECU (1.a) that the vehicle is in reverse
+        ii. If the vehicle is in reverse, the display should be initiated, the this ECU should begin listening for data from the camera sensor ECU (2.b.iii)
+        iii. When video packets are received, convert them to the proper display format and put them on the screen
+        iv. When the vehicle is not in reverse, turn the display off
 
-### Proximity Alert System
+## Nonfunctional Requirements
 
-In the proximity sensor alert system, the key components are the gear shift system and ECU, the backup proximity sensor and ECU, the stereo system and ECU, and the alert system and ECU.  The backup proximity ECU should constantly listen for the message from the gear shift ECU that the vehicle is in reverse.  When the vehicle is in reverse, the backup proximity sensor ECU should ensure that the backup proximity sensor is turned on.  When the sensor is turned on, the ECU should compute the distance of the nearest object based on sensor data, and place it into one of 5 ranges. If the distance is in range 1-4, the ECU should broadcast a message along the CAN bus indicating that the stereo system should be muted, as well as a message informing the audio alert system what range level was detected.   If the distance is in range 5, the ECU should broadcast a message to the stereo system to resume its previous volume, and broadcast a message to the audio alert system to stop sounding.  When the vehicle is not in reverse, the backup proximity sensor ECU should ensure that the backup proximity sensor is turned off, broadcast a message to the stereo system to resume its previous volume, and broadcast a message to the audio alert system to stop sounding.  The stereo system ECU and audio alert system ECU should both constantly listen for status updates from the backup proximity sensor ECU.  If the stereo system ECU receives a mute message, it should store its current volume then reduce the volume to 0.  If the stereo system ECU receives a resume message and is currently muted, it should restore its volume to the previously stored level.  Otherwise if the stereo system ECU receives a resume message and is currently not muted, it should ignore the message.   If the audio alert system ECU receives a range 1 message, it should sound continuously, a range 2 message, it should sound for 0.2 seconds every 0.4 seconds, a range 3 message, it should sound for 0.2 seconds every 0.8 seconds, and a range 4 message, it should sound for 0.2 seconds every 1.0 seconds.  All repeated sounds should be based on an internal timer within the audio alert system ECU, so that the sound pattern will not restart when a duplicate range message is received.
+We choose 4 meters as our maximum distance (3.iv) based on the results of Paine and Henderson [@paine_devices_2001]. A false positive is when the system sounds an alert with no obstacle in range. A false negative is when the system fails to sound an alert when an obstacle is anywhere with the alert range. With reversing shown to be a considerable risk to pedestrians, it is important that these systems be fault tolerant, but also that they operate with reasonable and understood limitations. False negatives are unacceptable, but we still aim to reduce false positives in an effort to avoid drivers adapting to alert messages and ignoring them (see 3.e).
 
-### Camera System
+It is important that we expect a reasonable level of efficacy, and not give operators the impression that their proximity sensors are fool-proof. Experimentation showed that at 8kph, the speeds at which most backup collisions occur [@young_development_1995], most sonar systems designed for parking could only be expected to prevent 25% of collisions [@glazduri_investigation_2005]. Given the age of this study, and that the sensors were placed for parking and not pedestrian detection, we require our system to achieve a 50% prevent rate under the same laboratory conditions (3.g). While this will be an improvement over the previously tested systems, the still-low level of efficacy supports our also including rear cameras.
 
-In the reverse camera system, the key components are the gear shift system and ECU, the camera sensor and ECU, and the video display and ECU.  The camera ECU should constantly listen for the message from the gear shift ECU that the vehicle is in reverse.  When the vehicle is in reverse, the camera ECU should ensure that the camera is turned on and begin collecting digital video information from the camera.  When digital video information is collected, the camera ECU should convert it into the proper type of packets and broadcast them across the CAN bus to the video display.  When the vehicle is not in reverse, the camera ECU should ensure that the camera sensor is turned off.  The video display ECU should also constantly listen for the message from the gear shift ECU that the vehicle is in reverse.  When the vehicle is in reverse, the video display ECU should ensure that the video display is turned on, and start listening for digital video information packets from the camera ECU.  When digital video information packets are received, the video display ECU should convert them into a format displayable by the video display, and show them on the video display.  When the vehicle is not in reverse, the video display ECU should ensure that the video display is turned off.
+3. Ranges and tolerances for the Proximity Alert System (1)
+    a. Ranges are measured from the rear bumper of the car, facing backward, perpendicular to the bumper
+        i. Range 1 shall be distance 0 to 1 meter
+        ii. Range 2 shall be distance 1 to 2 meters
+        iii. Range 3 shall be distance 2 to 3 meters
+        iv. Range 4 shall be distance 3 to 4 meters
+        v. Range 5 shall be distances beyond 4 meters
+    b. Ranges can be transmitted over network with less than 0.1 seconds of delay
+    c. All states emitted by the proximity ECU (1.c) shall be subject to error correcting codes
+    d. Any message received by the alert system ECU (1.e) which is outside of the acceptable ranges shall result in a dashboard error notification
+    e. Any message received by the alert system ECU (1.e) in range 1 or 2 shall result in an alert, regardless of error state
+    f. Proximity sensor response times shall be less than 350ms, as dictated by ISO standards [@iso_transport]. 
+    g. Proximity sensor collision prevention probability shall be at least 0.5 under laboratory conditions
 
-## Quality and Performance
+An important consideration for the camera system is the acceptable lag between shifting into reverse and activation of the view-screen. Manufacturer comments during NHTSA proceedings suggest reasonable times of 1 to 3 seconds [@nhtsa_rearview] (4.a).
 
-### Definitions
-
-We define range 1 to be distance 0 to 1 meter from the rear bumper of the vehicle; range 2 to be 1 to 2 meters; range 3 to be 2 to 3 meters; and range 4 3 to 4 meters. Range 5 comprises distances beyond 4 meters. We choose 4 meters as our maximum distance based on the results of Paine and Henderson [@paine_devices_2001]. A false positive is when the system sounds an alert with no obstacle in range. A false negative is when the system fails to sound an alert when an obstacle is anywhere with the alert range. 
-
-### Proximity Alert System
-
-With reversing shown to be a considerable risk to pedestrians, it is important that these systems be fault tolerant, but also that they operate with reasonable and understood limitations. All states emitted by the proximity ECU shall be subject to error correcting codes (ECC). Messages outside the acceptable list of ranges should result in a dashboard error notification. Messages of range 1 or 2 should always result in an alert message, even if some error state is known; this is because false negatives are unacceptable, but we still aim to reduce false positives in an effort to avoid drivers adapting to alert messages and ignoring them. Proximity sensor response times shall be less than 350ms, as dictated by ISO standards [@iso_transport]. 
-
-It is important that we expect a reasonable level of efficacy, and not give operators the impression that their proximity sensors are fool-proof. Experimentation showed that at 8kph, the speeds at which most backup collisions occur [@young_development_1995], most sonar systems designed for parking could only be expected to prevent 25% of collisions [@glazduri_investigation_2005]. Given the age of this study, and that the sensors were placed for parking and not pedestrian detection, we require our system to achieve a 50% prevent rate under the same laboratory conditions. While this will be an improvement over the previously tested systems, the still-low level of efficacy supports our also including rear cameras.
-
-### Camera System
-
-An important consideration for the camera system is the acceptable lag between shifting into reverse and activation of the viewscreen. Manufacturer comments during NHTSA proceedings suggest reasonable times of 1 to 3 seconds [@nhtsa_rearview]. Given our reliance on the camera system to prevent accidents when proximity sensors fail, we require a maximum 1 second delay between shifting and viewscreen activation. Minimum average mean time between failures for camera subsystem activation should be 3 years in a well-functioning system. 
+4. Tolerances for the camera system
+    a. We require a maximum 1 second delay between shifting and view-screen activation 
+    b. Minimum average mean time between failures for camera subsystem activation shall be 3 years in a well-functioning system
 
 ## References
 \setlength{\parindent}{-0.2in}
