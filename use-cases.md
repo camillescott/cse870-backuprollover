@@ -6,6 +6,18 @@ author:
 date: Feb 24, 2015
 ...
 
+## System Invariants
+
+1. Permit operation of the vehicle (if the backup rollover system prevents the vehicle from backing up or driving at the speed limit, then it is not useful)
+
+2. Prohibit malicious modifications (if a hacker can alter the backup rollover system so it fails to give an alarm, or falsely gives an alarm, then the system isn’t trustworthy)
+
+3. Prohibit any system within the vehicle from turning off the backup rollover system (for example, a third-party stereo system should not disable our system)
+
+## System Boundary
+
+The boundary of our system encompasses the backup proximity system, camera system, and their connections to the built-in car systems.
+
 ## Detailed Use Cases
 
 1. Alert Proximity
@@ -32,7 +44,7 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   1.c, 1.d, 1.e, 1.f, 1.g
 
     Use Cases
 
@@ -42,19 +54,19 @@ date: Feb 24, 2015
 
     Actors
 
-    :    
+    :    Display
  
     Description
 
-    :    
+    :    This use case is when the display needs to turn off.  It is connected to the display actor and performs the necessary logic to turn off the screen when it needs to be turned off.  It depends on the “detect reverse” and “camera off” use cases, since the display should only turn off if the vehicle is not in reverse and the camera is turned off.
 
     Type
 
-    :   
+    :   Secondary
 
     Includes
 
-    :   
+    :   None
 
     Extends
 
@@ -62,29 +74,29 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   2.c, 2.d
 
     Use Cases
 
-    :   
+    :   None
 
 3. Display On 
 
     Actors
 
-    :    
+    :    Display
  
     Description
 
-    :    
+    :    This use case is when the display needs to turn on.  It is connected to the display actor and performs the necessary logic to turn on the screen when it needs to be turned on.  It depends on the “detect reverse” and “camera on” use cases, since the display should only turn on if the vehicle is in reverse and the camera is turned on.
 
     Type
 
-    :   
+    :   Secondary
 
     Includes
 
-    :   
+    :   None
 
     Extends
 
@@ -92,29 +104,29 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   2.c, 2.d
 
     Use Cases
 
-    :   
+    :   None
 
 4. Mute
 
     Actors
 
-    :    
+    :    Stereo System
  
     Description
 
-    :    
+    :   This use case is when the stereo needs to mute.  It is connected to the stereo system actor and performs the necessary logic to mute the sound from the stereo system when it needs to be muted.  It depends on the “detect reverse” and “alert proximity” use cases, since the stereo should only be muted when the vehicle is in reverse and the proximity of an object has been detected and calculated by the sensor and range calculations. 
 
     Type
 
-    :   
+    :   Secondary
 
     Includes
 
-    :   
+    :   None
 
     Extends
 
@@ -122,29 +134,29 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   1.f, 1.g
 
     Use Cases
 
-    :   
+    :   None
 
 5. Resume
 
     Actors
 
-    :    
+    :    Stereo System
  
     Description
 
-    :    
+    :    This use case is when the stereo needs to resume playing.  It is connected to the stereo system actor and performs the necessary logic to resume playing sound from the stereo system if it had been playing before it was muted.  It depends on the “alert proximity” use case, since the stereo should only resume playing when there is no object detected within a dangerous proximity.
 
     Type
 
-    :   
+    :   Secondary
 
     Includes
 
-    :   
+    :   None
 
     Extends
 
@@ -152,7 +164,7 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   1.g, 1.f
 
     Use Cases
 
@@ -162,7 +174,7 @@ date: Feb 24, 2015
 
     Actors
 
-    :    Proxomity Sensor
+    :    Proximity Sensor
  
     Description
 
@@ -252,11 +264,11 @@ date: Feb 24, 2015
 
     Actors
 
-    :    
+    :    Camera
  
     Description
 
-    :    
+    :    Turns the camera on when the vehicle is in reverse
 
     Type
 
@@ -264,7 +276,7 @@ date: Feb 24, 2015
 
     Includes
 
-    :   
+    :   Primary
 
     Extends
 
@@ -272,29 +284,29 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   4.b, 2.b, 2.a
 
     Use Cases
 
-    :   
+    :   Display On
 
 10. Camera Off
 
     Actors
 
-    :    
+    :    Camera
  
     Description
 
-    :    
+    :    Turns the camera off when the vehicle is in reverse
 
     Type
 
-    :   
+    :   Secondary
 
     Includes
 
-    :   
+    :   None
 
     Extends
 
@@ -302,7 +314,7 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   4.b, 2.d.iv
 
     Use Cases
 
@@ -312,19 +324,19 @@ date: Feb 24, 2015
 
     Actors
 
-    :    
- 
+    :    Proximity Sensor
+
     Description
 
-    :    
+    :    This use case determines the distance range of any objects detected by the proximity sensor.  It is connected to the proximity sensor, when collects raw sensor data that needs to be converted into a distance range.  It depends on the “scan” use case, since no distance ranges can be calculated unless the proximity sensor has scanned for objects.
 
     Type
 
-    :   
+    :   Primary
 
     Includes
 
-    :   
+    :   None
 
     Extends
 
@@ -332,17 +344,17 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   1.a, 1.b, 1.c
 
     Use Cases
 
-    :   
+    :   Alert Proximity, Range Error
 
-2. Range Error
+12. Range Error
 
     Actors
 
-    :    
+    :    Dashboard Alert System
  
     Description
 
@@ -350,11 +362,11 @@ date: Feb 24, 2015
 
     Type
 
-    :   
+    :   This use case is a special case (error case) of the “get range” use case.  It happens when there is an error in determining the range of objects detected by the proximity sensor.  It communicates with the dashboard alert system actor to inform the driver when an error occurs to the driver knows that the system is not reliably reporting
 
     Includes
 
-    :   
+    :   None
 
     Extends
 
@@ -362,9 +374,28 @@ date: Feb 24, 2015
 
     Cross-refs
 
-    :   None
+    :   1.c.*
 
     Use Cases
 
-    :   
+    :   None
 
+## Use Cases Diagram
+
+![Use Case Diagram](UCD.png)
+
+## Sources of Uncertainty
+
+Sonar range detectors work by bouncing ultrasonic pulses off of surrounding surfaces. The distance between the sensor and the surface another object is measured using the time-of-flight for the ultrasonic pulse. Problems arise when the ultrasonic pulse doesn’t bounce off of an object as expected. In these situations, distance measurements for the objects may be incorrect, or worse, not calculated at all. The following are examples of such situation.
+
+### Specular Reflection
+
+Some surfaces will reflect the sonar pulse away from the sensor, at certain angles. In this case the sensor is never able to calculate the time-of-flight for the pulse because the pulse is not returned. Therefore, no distance measurement can be calculated.
+
+### Signal Absorption  
+
+Softer materials are have the ability to absorb the ultrasonic pulse. When this occurs, the returned signal strength significantly reduced. This could cause objects to go undetected until they are too close to the vehicle to avoid collision.  
+
+### Downhill Objects
+
+ When backing downhill, object may be closer than the sonar reading reflects. This is a result of the increase time-of-flight caused by the decline.
