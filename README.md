@@ -1,6 +1,6 @@
 # Automotive Backup Rollover Prevention System
 
-*Camille Scott, Erin Hoffman, and Rayshawn Holbrooke*
+*Camille Scott, Erin Hoffman, and Rayshawn Holbrook*
 
 
 ### About
